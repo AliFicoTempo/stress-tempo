@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { 
@@ -11,7 +11,9 @@ import {
   Truck, 
   LogOut,
   Menu,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -26,7 +28,18 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { toast } = useToast()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  // Handle scroll untuk mobile
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const adminItems = [
     { href: '/admin', label: 'Dashboard', icon: Home },
@@ -65,32 +78,84 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
     }
   }
 
+  const sidebarWidth = isCollapsed ? 'w-16' : 'w-64'
+  const mobileTopPosition = isScrolled ? 'top-4' : 'top-6'
+
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button - SISI KANAN */}
       <Button
         variant="outline"
         size="icon"
-        className="lg:hidden fixed top-4 left-4 z-50"
-        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "lg:hidden fixed right-4 z-50",
+          mobileTopPosition,
+          "bg-white shadow-md"
+        )}
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
-        {isOpen ? <X size={20} /> : <Menu size={20} />}
+        {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </Button>
 
-      {/* Sidebar */}
+      {/* Desktop Toggle Button - SISI KANAN */}
+      <Button
+        variant="outline"
+        size="icon"
+        className={cn(
+          "hidden lg:flex fixed right-4 top-6 z-50",
+          "bg-white shadow-md hover:bg-gray-50"
+        )}
+        onClick={() => setIsCollapsed(!isCollapsed)}
+      >
+        {isCollapsed ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+      </Button>
+
+      {/* Sidebar - SISI KANAN */}
       <aside
         className={cn(
-          'fixed left-0 top-0 h-screen w-64 bg-gray-900 text-white transition-transform duration-300 z-40',
+          'fixed right-0 top-0 h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white transition-all duration-300 z-40',
+          sidebarWidth,
           'lg:translate-x-0',
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
         )}
       >
-        <div className="p-6 border-b border-gray-700">
-          <h2 className="text-xl font-bold">STRESS TEMPO</h2>
-          <p className="text-sm text-gray-400 mt-1">Hi, {userName}</p>
+        {/* Sidebar Header */}
+        <div className={cn(
+          "p-6 border-b border-gray-700 flex items-center justify-between",
+          isCollapsed && "flex-col justify-center p-4"
+        )}>
+          {!isCollapsed ? (
+            <>
+              <div>
+                <h2 className="text-xl font-bold">STRESS TEMPO</h2>
+                <p className="text-sm text-gray-400 mt-1">Hi, {userName}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsCollapsed(true)}
+                className="text-gray-400 hover:text-white hover:bg-gray-700"
+              >
+                <ChevronRight size={20} />
+              </Button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center">
+              <div className="text-lg font-bold mb-1">ST</div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsCollapsed(false)}
+                className="text-gray-400 hover:text-white hover:bg-gray-700 mt-2"
+              >
+                <ChevronLeft size={20} />
+              </Button>
+            </div>
+          )}
         </div>
 
-        <nav className="p-4">
+        {/* Navigation Items */}
+        <nav className={cn("p-4", isCollapsed && "p-2")}>
           <ul className="space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon
@@ -101,15 +166,17 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
                   <Link
                     href={item.href}
                     className={cn(
-                      'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                      'flex items-center rounded-lg transition-colors',
+                      isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3',
                       isActive
                         ? 'bg-blue-600 text-white'
                         : 'hover:bg-gray-700 text-gray-300'
                     )}
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    title={isCollapsed ? item.label : ''}
                   >
                     <Icon size={20} />
-                    <span>{item.label}</span>
+                    {!isCollapsed && <span>{item.label}</span>}
                   </Link>
                 </li>
               )
@@ -117,25 +184,47 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
           </ul>
         </nav>
 
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-700">
+        {/* Logout Button */}
+        <div className={cn(
+          "absolute bottom-0 w-full border-t border-gray-700",
+          isCollapsed ? "p-2" : "p-4"
+        )}>
           <Button
             variant="outline"
-            className="w-full bg-transparent border-gray-600 text-white hover:bg-red-600 hover:border-red-600 hover:text-white"
+            className={cn(
+              "w-full bg-transparent border-gray-600 text-white hover:bg-red-600 hover:border-red-600 hover:text-white",
+              isCollapsed && "justify-center p-2"
+            )}
             onClick={handleLogout}
+            title={isCollapsed ? "Logout" : ""}
           >
-            <LogOut size={20} className="mr-2" />
-            Log Out
+            <LogOut size={20} className={cn(isCollapsed ? "" : "mr-2")} />
+            {!isCollapsed && "Log Out"}
           </Button>
         </div>
       </aside>
 
       {/* Overlay for mobile */}
-      {isOpen && (
+      {isMobileMenuOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-          onClick={() => setIsOpen(false)}
+          onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
+
+      {/* Main content margin adjustment */}
+      <style jsx>{`
+        main {
+          margin-right: ${isCollapsed ? '4rem' : '16rem'};
+          transition: margin-right 0.3s ease;
+        }
+        
+        @media (max-width: 1024px) {
+          main {
+            margin-right: 0;
+          }
+        }
+      `}</style>
     </>
   )
 }

@@ -71,20 +71,41 @@ export async function GET(request: NextRequest) {
     // 1. HK: Total hari kerja (bukan Minggu)
     const hk = uniqueDates.filter(date => !isSunday(new Date(date))).length
     
-    // 2. HKE: Hari kerja dengan shipment (jumlah_toko > 0)
-    // PERHITUNGAN TETAP SAMA
-    const hke = shipments.filter(s => s.jumlah_toko > 0).length > 0 ? 
-      uniqueDates.filter(date => {
-        const dateShipments = shipments.filter(s => s.tanggal === date)
-        return dateShipments.length > 0 && !isSunday(new Date(date))
-      }).length : 0
-    
-    // 3. HKNE BARU: Hitung shipment yang memiliki nama_freelance
-    const hkne = shipments.filter(s => 
-      s.nama_freelance && 
-      s.nama_freelance.trim() !== '' && 
-      s.nama_freelance !== '-'
-    ).length
+    // 2. HKE: Hari kerja yang memiliki shipment tapi TIDAK memiliki nama_freelance
+    const hke = uniqueDates.filter(date => {
+      const dateShipments = shipments.filter(s => s.tanggal === date)
+      
+      // Cek apakah ada shipment pada tanggal tersebut
+      const hasShipments = dateShipments.length > 0
+      
+      // Cek apakah SEMUA shipment pada tanggal tersebut TIDAK memiliki nama_freelance
+      const hasNoFreelance = dateShipments.every(s => 
+        !s.nama_freelance || 
+        s.nama_freelance.trim() === '' || 
+        s.nama_freelance === '-'
+      )
+      
+      // Hari kerja (bukan Minggu) dengan shipment TANPA freelance
+      return !isSunday(new Date(date)) && hasShipments && hasNoFreelance
+    }).length
+
+    // 3. HKNE: Hari kerja yang memiliki shipment DENGAN nama_freelance
+    const hkne = uniqueDates.filter(date => {
+      const dateShipments = shipments.filter(s => s.tanggal === date)
+      
+      // Cek apakah ada shipment pada tanggal tersebut
+      const hasShipments = dateShipments.length > 0
+      
+      // Cek apakah SETIDAKNYA SATU shipment pada tanggal tersebut memiliki nama_freelance
+      const hasFreelance = dateShipments.some(s => 
+        s.nama_freelance && 
+        s.nama_freelance.trim() !== '' && 
+        s.nama_freelance !== '-'
+      )
+      
+      // Hari kerja (bukan Minggu) dengan shipment YANG MEMILIKI freelance
+      return !isSunday(new Date(date)) && hasShipments && hasFreelance
+    }).length
 
     // Data untuk chart
     const chartData = shipments.reduce((acc: any[], shipment) => {
