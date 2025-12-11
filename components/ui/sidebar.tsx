@@ -83,7 +83,7 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Menu Button - SISI KANAN */}
+      {/* Mobile Menu Button - HANYA DI MOBILE */}
       <Button
         variant="outline"
         size="icon"
@@ -97,13 +97,14 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
         {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </Button>
 
-      {/* Desktop Toggle Button - SISI KANAN */}
+      {/* Desktop Toggle Button - HANYA DI DESKTOP */}
       <Button
         variant="outline"
         size="icon"
         className={cn(
           "hidden lg:flex fixed right-4 top-6 z-50",
-          "bg-white shadow-md hover:bg-gray-50"
+          "bg-white shadow-md hover:bg-gray-50",
+          isCollapsed ? "right-16" : "right-64"
         )}
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
@@ -130,11 +131,12 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
                 <h2 className="text-xl font-bold">STRESS TEMPO</h2>
                 <p className="text-sm text-gray-400 mt-1">Hi, {userName}</p>
               </div>
+              {/* Remove duplicate toggle button inside sidebar for desktop */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsCollapsed(true)}
-                className="text-gray-400 hover:text-white hover:bg-gray-700"
+                className="text-gray-400 hover:text-white hover:bg-gray-700 lg:hidden"
               >
                 <ChevronRight size={20} />
               </Button>
@@ -142,11 +144,12 @@ export default function Sidebar({ userRole, userName }: SidebarProps) {
           ) : (
             <div className="flex flex-col items-center">
               <div className="text-lg font-bold mb-1">ST</div>
+              {/* Remove duplicate toggle button inside sidebar for desktop */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsCollapsed(false)}
-                className="text-gray-400 hover:text-white hover:bg-gray-700 mt-2"
+                className="text-gray-400 hover:text-white hover:bg-gray-700 mt-2 lg:hidden"
               >
                 <ChevronLeft size={20} />
               </Button>
