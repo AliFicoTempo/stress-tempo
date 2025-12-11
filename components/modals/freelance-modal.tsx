@@ -259,7 +259,6 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* 📱 RESPONSIVE DIALOG: Full screen di mobile, max width di desktop */}
       <DialogContent className="
         max-h-[90vh] 
         overflow-y-auto
@@ -272,7 +271,6 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
         my-4
       ">
         
-        {/* 📱 HEADER RESPONSIVE */}
         <DialogHeader className="space-y-3">
           <div className="flex items-center justify-between">
             <DialogTitle className="
@@ -284,7 +282,6 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
               <Smartphone className="hidden md:inline h-5 w-5" />
               SHIPMENT FREELANCE
             </DialogTitle>
-            {/* 🔘 CLOSE BUTTON UNTUK MOBILE */}
             <Button
               variant="ghost"
               size="icon"
@@ -299,7 +296,6 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
           </DialogDescription>
         </DialogHeader>
 
-        {/* 📱 FORM GRID RESPONSIVE */}
         <div className="
           grid 
           grid-cols-1 
@@ -405,6 +401,9 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
                 handleInputChange('shipment_id', value)
               }}
               className="h-10 md:h-11 text-sm md:text-base"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              type="text"
             />
           </div>
 
@@ -416,6 +415,8 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
             <Input
               id="jumlah_toko"
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               min="0"
               placeholder="0"
               value={formData.jumlah_toko}
@@ -432,6 +433,8 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
             <Input
               id="terkirim"
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               min="0"
               max={formData.jumlah_toko}
               placeholder="0"
@@ -449,13 +452,15 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
             <Input
               id="gagal"
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               readOnly
               value={calculateGagal()}
               className="h-10 md:h-11 text-sm md:text-base bg-gray-50"
             />
           </div>
 
-          {/* 📝 ALASAN (FULL WIDTH) */}
+          {/* 📝 ALASAN */}
           <div className="md:col-span-2 space-y-1 md:space-y-2">
             <Label htmlFor="alasan" className="text-sm md:text-base">
               Alasan {calculateGagal() > 0 && '*'}
@@ -471,7 +476,6 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
           </div>
         </div>
 
-        {/* 📱 FOOTER BUTTONS RESPONSIVE */}
         <div className="
           flex 
           flex-col-reverse 
