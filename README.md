@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# STRESS TEMPO - Shipment Tracking System
 
-## Getting Started
+Aplikasi web untuk tracking shipment dengan multi-level user (Admin & Regular).
 
-First, run the development server:
+## 🚀 Fitur Utama
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 🔐 Authentication
+- Multi-level user (Admin & Regular)
+- Session-based authentication
+- Role-based access control
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 📊 Dashboard Admin
+- Cardboard metrics (HK, HKE, HKNE)
+- Charts (Horizontal Stack Bar & Pie Chart)
+- Tabel rekap shipment dengan pagination
+- Filter tanggal dan pencarian
+- CRUD semua data shipment
+- Monitor semua driver
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 📱 Dashboard Regular (Driver)
+- Cardboard metrics pribadi
+- Charts untuk data sendiri
+- Tabel shipment pribadi
+- Input shipment harian
+- Hanya melihat dan mengelola data sendiri
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 📋 Modals
+- Shipment Modal (Admin & Regular)
+- Freelance Shipment Modal
+- Cost Freelance Modal (dalam pengembangan)
 
-## Learn More
+### 📈 Laporan
+- Rekap semua shipment
+- Performa driver
+- Shipment all driver
+- Export data ke CSV
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Teknologi
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Frontend
+- **Next.js 14** - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Shadcn/UI** - Component library
+- **Recharts** - Data visualization
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Backend
+- **PostgreSQL** - Database (Neon.tech)
+- **Next.js API Routes** - Serverless functions
+- **pg** - PostgreSQL client
 
-## Deploy on Vercel
+### Deployment
+- **Vercel** - Frontend hosting
+- **Neon.tech** - PostgreSQL hosting
+- **GitHub** - Version control
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📁 Struktur Proyek
