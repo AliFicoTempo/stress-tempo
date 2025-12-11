@@ -97,7 +97,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-50">
       <Sidebar userRole="admin" userName={user.nama_lengkap} />
       
-      <main className="lg:ml-64 p-6">
+      <main className="pr-0 lg:pr-64 transition-all duration-300 p-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">
@@ -126,19 +126,27 @@ export default function AdminDashboard() {
           <Cardboard title="HKNE" value={cardboardData.hkne} description="Shipment Freelance" />
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
-            <h3 className="text-lg font-semibold mb-4">Distribusi Harian</h3>
+        {/* Charts Section - Horizontal chart dengan scroll */}
+        <div className="mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Distribusi Harian</h3>
+              <div className="text-sm text-gray-500">
+                Scroll horizontal untuk melihat lebih banyak data
+              </div>
+            </div>
             <HorizontalStackBar data={chartData} />
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
-            <h3 className="text-lg font-semibold mb-4">Perbandingan Total</h3>
-            <PieChart data={chartData} />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+            <div className="bg-white p-6 rounded-xl shadow-sm border">
+              <h3 className="text-lg font-semibold mb-4">Perbandingan Total</h3>
+              <PieChart data={chartData} />
+            </div>
           </div>
         </div>
 
-        {/* FILTER SECTION - Dipindahkan di sini (bawah chart, atas tabel) */}
+        {/* FILTER SECTION */}
         <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
           <h3 className="text-lg font-semibold mb-4">Filter Data</h3>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
