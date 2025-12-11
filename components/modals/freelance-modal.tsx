@@ -14,13 +14,13 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { CalendarIcon } from 'lucide-react'
+import { CalendarIcon, Smartphone } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
 interface Driver {
-  user_id: string      // PERBAIKAN: HANYA user_id, BUKAN id
+  user_id: string
   nama_lengkap: string
   role: string
 }
@@ -56,29 +56,21 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
     }
   }, [isOpen])
 
-  // ✅ PERBAIKAN 1: Fungsi fetchDrivers yang sudah benar
   const fetchDrivers = async () => {
     try {
       setIsFetchingDrivers(true)
-      console.log('🚀 Fetching drivers from /api/users/drivers...')
+      console.log('🚀 Fetching drivers...')
       
       const response = await fetch('/api/users/drivers')
-      
-      console.log('📡 Response status:', response.status)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
       const data = await response.json()
-      console.log('📦 API response:', data)
       
       if (data.success) {
-        // ✅ PERBAIKAN PENTING: Gunakan data.drivers (BUKAN data.users)
         const driversData = data.drivers || []
-        console.log('👥 Drivers data:', driversData)
-        console.log('🔢 Number of drivers:', driversData.length)
-        
         setDrivers(driversData)
         
         if (driversData.length === 0) {
@@ -123,15 +115,8 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
     })
   }
 
-  // ✅ PERBAIKAN 2: Fungsi handleDriverSelect yang benar
   const handleDriverSelect = (userId: string) => {
-    console.log('🎯 Selected driver ID:', userId)
-    console.log('📋 Available drivers:', drivers)
-    
-    // PERBAIKAN: Hanya gunakan user_id (sesuai struktur API)
     const selectedDriver = drivers.find(d => d.user_id?.toString() === userId)
-    
-    console.log('👤 Selected driver:', selectedDriver)
     
     if (selectedDriver) {
       setFormData(prev => ({
@@ -227,8 +212,6 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
         nama_freelance: formData.nama_freelance.trim(),
       }
 
-      console.log('📤 Submitting payload:', payload)
-
       const response = await fetch('/api/shipments/freelance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -276,49 +259,102 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">SHIPMENT FREELANCE</DialogTitle>
-          <DialogDescription>
+      {/* 📱 RESPONSIVE DIALOG: Full screen di mobile, max width di desktop */}
+      <DialogContent className="
+        max-h-[90vh] 
+        overflow-y-auto
+        w-[95vw] 
+        max-w-lg 
+        md:max-w-2xl
+        p-4 
+        md:p-6
+        mx-auto
+        my-4
+      ">
+        
+        {/* 📱 HEADER RESPONSIVE */}
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="
+              text-xl 
+              md:text-2xl 
+              font-bold
+              flex items-center gap-2
+            ">
+              <Smartphone className="hidden md:inline h-5 w-5" />
+              SHIPMENT FREELANCE
+            </DialogTitle>
+            {/* 🔘 CLOSE BUTTON UNTUK MOBILE */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="md:hidden h-8 w-8"
+            >
+              ✕
+            </Button>
+          </div>
+          <DialogDescription className="text-sm md:text-base">
             Tambahkan data shipment untuk driver freelance
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="nama_freelance">Nama Freelance *</Label>
+        {/* 📱 FORM GRID RESPONSIVE */}
+        <div className="
+          grid 
+          grid-cols-1 
+          md:grid-cols-2 
+          gap-4 
+          py-4
+          max-h-[60vh]
+          overflow-y-auto
+          pr-2
+        ">
+          
+          {/* 👤 NAMA FREELANCE */}
+          <div className="space-y-1 md:space-y-2">
+            <Label htmlFor="nama_freelance" className="text-sm md:text-base">
+              Nama Freelance *
+            </Label>
             <Input
               id="nama_freelance"
-              placeholder="Masukkan nama freelance"
+              placeholder="Nama freelance"
               value={formData.nama_freelance}
               onChange={e => handleInputChange('nama_freelance', e.target.value)}
+              className="h-10 md:h-11 text-sm md:text-base"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="driver">Nama Driver *</Label>
+          {/* 🚗 DRIVER SELECT */}
+          <div className="space-y-1 md:space-y-2">
+            <Label htmlFor="driver" className="text-sm md:text-base">
+              Nama Driver *
+            </Label>
             <Select 
               onValueChange={handleDriverSelect}
               disabled={isFetchingDrivers}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 md:h-11 text-sm md:text-base">
                 <SelectValue placeholder={
-                  isFetchingDrivers ? "Memuat driver..." : "Pilih Driver"
+                  isFetchingDrivers ? "Memuat..." : "Pilih Driver"
                 } />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-60">
                 {isFetchingDrivers ? (
                   <SelectItem value="loading" disabled>
                     Memuat data driver...
                   </SelectItem>
                 ) : drivers.length === 0 ? (
                   <SelectItem value="no-data" disabled>
-                    Tidak ada driver tersedia
+                    Tidak ada driver
                   </SelectItem>
                 ) : (
                   drivers.map(driver => (
-                    // ✅ PERBAIKAN: Gunakan user_id sebagai value
-                    <SelectItem key={driver.user_id} value={driver.user_id.toString()}>
+                    <SelectItem 
+                      key={driver.user_id} 
+                      value={driver.user_id.toString()}
+                      className="text-sm md:text-base"
+                    >
                       {driver.nama_lengkap}
                     </SelectItem>
                   ))
@@ -327,26 +363,23 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label>Tanggal *</Label>
+          {/* 📅 TANGGAL */}
+          <div className="space-y-1 md:space-y-2">
+            <Label className="text-sm md:text-base">Tanggal *</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full h-10 md:h-11 justify-start text-left font-normal text-sm md:text-base",
                     !date && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? (
-                    format(date, "dd/MM/yyyy")
-                  ) : (
-                    "Pilih tanggal"
-                  )}
+                  {date ? format(date, "dd/MM/yyyy") : "Pilih tanggal"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={date}
@@ -357,8 +390,11 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
             </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="shipment_id">Shipment ID *</Label>
+          {/* 🆔 SHIPMENT ID */}
+          <div className="space-y-1 md:space-y-2">
+            <Label htmlFor="shipment_id" className="text-sm md:text-base">
+              Shipment ID *
+            </Label>
             <Input
               id="shipment_id"
               placeholder="10 digit angka"
@@ -368,11 +404,15 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
                 const value = e.target.value.replace(/\D/g, '')
                 handleInputChange('shipment_id', value)
               }}
+              className="h-10 md:h-11 text-sm md:text-base"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="jumlah_toko">Jumlah Toko *</Label>
+          {/* 🏪 JUMLAH TOKO */}
+          <div className="space-y-1 md:space-y-2">
+            <Label htmlFor="jumlah_toko" className="text-sm md:text-base">
+              Jumlah Toko *
+            </Label>
             <Input
               id="jumlah_toko"
               type="number"
@@ -380,11 +420,15 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
               placeholder="0"
               value={formData.jumlah_toko}
               onChange={e => handleInputChange('jumlah_toko', e.target.value)}
+              className="h-10 md:h-11 text-sm md:text-base"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="terkirim">Terkirim *</Label>
+          {/* 📦 TERKIRIM */}
+          <div className="space-y-1 md:space-y-2">
+            <Label htmlFor="terkirim" className="text-sm md:text-base">
+              Terkirim *
+            </Label>
             <Input
               id="terkirim"
               type="number"
@@ -393,22 +437,27 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
               placeholder="0"
               value={formData.terkirim}
               onChange={e => handleInputChange('terkirim', e.target.value)}
+              className="h-10 md:h-11 text-sm md:text-base"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="gagal">Gagal</Label>
+          {/* ❌ GAGAL */}
+          <div className="space-y-1 md:space-y-2">
+            <Label htmlFor="gagal" className="text-sm md:text-base">
+              Gagal
+            </Label>
             <Input
               id="gagal"
               type="number"
               readOnly
               value={calculateGagal()}
-              className="bg-gray-50"
+              className="h-10 md:h-11 text-sm md:text-base bg-gray-50"
             />
           </div>
 
-          <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="alasan">
+          {/* 📝 ALASAN (FULL WIDTH) */}
+          <div className="md:col-span-2 space-y-1 md:space-y-2">
+            <Label htmlFor="alasan" className="text-sm md:text-base">
               Alasan {calculateGagal() > 0 && '*'}
             </Label>
             <Input
@@ -417,22 +466,50 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
               value={formData.alasan}
               onChange={e => handleInputChange('alasan', e.target.value)}
               required={calculateGagal() > 0}
+              className="h-10 md:h-11 text-sm md:text-base"
             />
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-6 border-t">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+        {/* 📱 FOOTER BUTTONS RESPONSIVE */}
+        <div className="
+          flex 
+          flex-col-reverse 
+          md:flex-row 
+          justify-end 
+          gap-3 
+          pt-6 
+          border-t
+          mt-4
+        ">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isLoading}
+            className="
+              h-11 md:h-10
+              text-sm md:text-base
+              w-full md:w-auto
+              order-2 md:order-1
+            "
+          >
             Batal
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="
+              bg-blue-600 hover:bg-blue-700
+              h-11 md:h-10
+              text-sm md:text-base
+              w-full md:w-auto
+              order-1 md:order-2
+            "
           >
             {isLoading ? 'Menyimpan...' : 'Simpan'}
           </Button>
         </div>
+
       </DialogContent>
     </Dialog>
   )
