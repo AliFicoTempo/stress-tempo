@@ -25,6 +25,9 @@ export default function AdminDashboard() {
     hk: 0,
     hke: 0,
     hkne: 0,
+    totalDp: 0,        // 🆕 Tambah state untuk data baru
+    totalTerkirim: 0,  // 🆕
+    totalGagal: 0      // 🆕
   })
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [shipments, setShipments] = useState<Shipment[]>([])
@@ -119,11 +122,29 @@ export default function AdminDashboard() {
           </Button>
         </div>
 
-        {/* Cardboard Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* 🆕 Cardboard Section - 6 Cards Responsive */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+          {/* Existing Cards */}
           <Cardboard title="HK" value={cardboardData.hk} description="Hari Kerja" />
           <Cardboard title="HKE" value={cardboardData.hke} description="Hari Kerja Efektif" />
           <Cardboard title="HKNE" value={cardboardData.hkne} description="Shipment Freelance" />
+          
+          {/* 🆕 New Cards */}
+          <Cardboard 
+            title="Total DP" 
+            value={cardboardData.totalDp} 
+            description="Jumlah Total Toko" 
+          />
+          <Cardboard 
+            title="Total Terkirim" 
+            value={cardboardData.totalTerkirim} 
+            description="Pengiriman Berhasil" 
+          />
+          <Cardboard 
+            title="Total Gagal" 
+            value={cardboardData.totalGagal} 
+            description="Pengiriman Gagal" 
+          />
         </div>
 
         {/* Charts Section - Horizontal chart dengan scroll */}
@@ -146,7 +167,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* FILTER SECTION */}
+        {/* FILTER SECTION - SAMA */}
         <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
           <h3 className="text-lg font-semibold mb-4">Filter Data</h3>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">

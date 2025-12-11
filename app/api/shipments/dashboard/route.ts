@@ -107,6 +107,15 @@ export async function GET(request: NextRequest) {
       return !isSunday(new Date(date)) && hasShipments && hasFreelance
     }).length
 
+    // 🆕 4. TOTAL DP: Sum dari jumlah_toko
+    const totalDp = shipments.reduce((sum, s) => sum + (Number(s.jumlah_toko) || 0), 0)
+    
+    // 🆕 5. TOTAL TERKIRIM: Sum dari terkirim
+    const totalTerkirim = shipments.reduce((sum, s) => sum + (Number(s.terkirim) || 0), 0)
+    
+    // 🆕 6. TOTAL GAGAL: Sum dari gagal
+    const totalGagal = shipments.reduce((sum, s) => sum + (Number(s.gagal) || 0), 0)
+
     // Data untuk chart
     const chartData = shipments.reduce((acc: any[], shipment) => {
       const existing = acc.find(item => item.date === shipment.tanggal)
@@ -128,7 +137,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       shipments,
-      cardboard: { hk, hke, hkne },
+      cardboard: { 
+        hk, 
+        hke, 
+        hkne,
+        // 🆕 Tambahkan 3 metrics baru
+        totalDp,
+        totalTerkirim,
+        totalGagal
+      },
       chartData,
       total: shipments.length,
     })
@@ -136,7 +153,18 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Dashboard error:', error)
     return NextResponse.json(
-      { success: false, message: 'Terjadi kesalahan server' },
+      { 
+        success: false, 
+        message: 'Terjadi kesalahan server',
+        cardboard: {
+          hk: 0,
+          hke: 0,
+          hkne: 0,
+          totalDp: 0,
+          totalTerkirim: 0,
+          totalGagal: 0
+        }
+      },
       { status: 500 }
     )
   }

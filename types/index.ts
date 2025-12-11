@@ -40,6 +40,10 @@ export interface CardboardData {
   hk: number;
   hke: number;
   hkne: number;
+  // 🆕 Tambahkan 3 field baru
+  totalDp: number;
+  totalTerkirim: number;
+  totalGagal: number;
 }
 
 export interface ChartData {
