@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/database/config'
-import { isSunday } from 'date-fns'
 
 export async function GET(request: NextRequest) {
   try {
@@ -107,25 +106,24 @@ export async function GET(request: NextRequest) {
     const shipmentsResult = await client.query(query, queryParams)
     const shipments = shipmentsResult.rows
 
-    // 2. Query untuk metrics (tetap sama dengan sebelumnya)
+    // 2. Query untuk metrics - PERBAIKAN DI SINI
     let metricsQuery = `
       SELECT 
-        -- ... (sama dengan sebelumnya)
         COUNT(DISTINCT tanggal) as total_hari,
         COUNT(DISTINCT CASE 
-          WHEN NOT isSunday(tanggal::date) THEN tanggal 
+          WHEN EXTRACT(DOW FROM tanggal) != 0 THEN tanggal 
           ELSE NULL 
         END) as total_hari_kerja,
         
         COUNT(DISTINCT CASE 
-          WHEN NOT isSunday(tanggal::date) 
+          WHEN EXTRACT(DOW FROM tanggal) != 0 
             AND (nama_freelance IS NULL OR nama_freelance = '' OR nama_freelance = '-')
             THEN tanggal 
           ELSE NULL 
         END) as hke,
         
         COUNT(DISTINCT CASE 
-          WHEN NOT isSunday(tanggal::date) 
+          WHEN EXTRACT(DOW FROM tanggal) != 0 
             AND nama_freelance IS NOT NULL 
             AND nama_freelance != '' 
             AND nama_freelance != '-'
@@ -140,8 +138,8 @@ export async function GET(request: NextRequest) {
       WHERE 1=1
     `
 
-    const metricsParams = [...queryParams.slice(0, -paramIndex + 1)]
-    let metricsParamIndex = metricsParams.length + 1
+    const metricsParams: any[] = []
+    let metricsParamIndex = 1
 
     // Apply same filters to metrics query
     if (userRole === 'regular') {
@@ -171,6 +169,41 @@ export async function GET(request: NextRequest) {
       )`
       metricsParams.push(`%${search}%`)
       metricsParamIndex++
+    }
+
+    // Apply additional filters to metrics if they exist
+    if (filterByDate) {
+      metricsQuery += ` AND tanggal = $${metricsParamIndex}`
+      metricsParams.push(filterByDate)
+      metricsParamIndex++
+    }
+
+    if (filterByType) {
+      if (filterByType === 'terkirim') {
+        metricsQuery += ` AND terkirim > 0`
+      } else if (filterByType === 'gagal') {
+        metricsQuery += ` AND gagal > 0`
+      }
+    }
+
+    if (filterByMetric) {
+      switch(filterByMetric) {
+        case 'hke':
+          metricsQuery += ` AND (nama_freelance IS NULL OR nama_freelance = '' OR nama_freelance = '-')`
+          break
+        case 'hkne':
+          metricsQuery += ` AND nama_freelance IS NOT NULL AND nama_freelance != '' AND nama_freelance != '-'`
+          break
+        case 'dp':
+          metricsQuery += ` AND jumlah_toko > 0`
+          break
+        case 'terkirim':
+          metricsQuery += ` AND terkirim > 0`
+          break
+        case 'gagal':
+          metricsQuery += ` AND gagal > 0`
+          break
+      }
     }
 
     const metricsResult = await client.query(metricsQuery, metricsParams)
@@ -235,7 +268,10 @@ export async function GET(request: NextRequest) {
           totalDp: 0,
           totalTerkirim: 0,
           totalGagal: 0
-        }
+        },
+        shipments: [],
+        chartData: [],
+        total: 0
       },
       { status: 500 }
     )
