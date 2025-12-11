@@ -11,6 +11,11 @@ export async function GET(request: NextRequest) {
     const fromDate = searchParams.get('from')
     const toDate = searchParams.get('to')
     const search = searchParams.get('search')
+    
+    // 🆕 PARAMETER FILTER BARU DARI CARDBOARD/CHART
+    const filterByMetric = searchParams.get('filterByMetric') // 'hk', 'hke', 'hkne', 'dp', 'terkirim', 'gagal'
+    const filterByDate = searchParams.get('filterByDate') // tanggal spesifik dari chart
+    const filterByType = searchParams.get('filterByType') // 'terkirim' atau 'gagal' dari chart
 
     let query = `
       SELECT s.*, u.role 
@@ -51,72 +56,134 @@ export async function GET(request: NextRequest) {
       paramIndex++
     }
 
+    // 🆕 FILTER TAMBAHAN DARI CARDBOARD/CHART
+    if (filterByDate) {
+      query += ` AND s.tanggal = $${paramIndex}`
+      queryParams.push(filterByDate)
+      paramIndex++
+    }
+
+    if (filterByType) {
+      if (filterByType === 'terkirim') {
+        query += ` AND s.terkirim > 0`
+      } else if (filterByType === 'gagal') {
+        query += ` AND s.gagal > 0`
+      }
+    }
+
+    if (filterByMetric) {
+      switch(filterByMetric) {
+        case 'hk':
+          // Hari kerja (tidak filter spesifik, tetap pakai filter tanggal)
+          break
+        case 'hke':
+          // Hanya shipment TANPA freelance
+          query += ` AND (s.nama_freelance IS NULL OR s.nama_freelance = '' OR s.nama_freelance = '-')`
+          break
+        case 'hkne':
+          // Hanya shipment DENGAN freelance
+          query += ` AND s.nama_freelance IS NOT NULL AND s.nama_freelance != '' AND s.nama_freelance != '-'`
+          break
+        case 'dp':
+          // Shipment dengan jumlah toko > 0
+          query += ` AND s.jumlah_toko > 0`
+          break
+        case 'terkirim':
+          // Shipment dengan terkirim > 0
+          query += ` AND s.terkirim > 0`
+          break
+        case 'gagal':
+          // Shipment dengan gagal > 0
+          query += ` AND s.gagal > 0`
+          break
+      }
+    }
+
     query += ` ORDER BY s.tanggal DESC, s.created_at DESC`
 
     const client = await pool.connect()
+    
+    // 1. Query untuk shipments dengan filter
     const shipmentsResult = await client.query(query, queryParams)
     const shipments = shipmentsResult.rows
 
-    // Ambil semua tanggal unik
-    const dates: string[] = []
-    const uniqueDates: string[] = []
-    
-    shipments.forEach(s => {
-      if (!dates.includes(s.tanggal)) {
-        dates.push(s.tanggal)
-        uniqueDates.push(s.tanggal)
-      }
-    })
-    
-    // 1. HK: Total hari kerja (bukan Minggu)
-    const hk = uniqueDates.filter(date => !isSunday(new Date(date))).length
-    
-    // 2. HKE: Hari kerja yang memiliki shipment tapi TIDAK memiliki nama_freelance
-    const hke = uniqueDates.filter(date => {
-      const dateShipments = shipments.filter(s => s.tanggal === date)
-      
-      // Cek apakah ada shipment pada tanggal tersebut
-      const hasShipments = dateShipments.length > 0
-      
-      // Cek apakah SEMUA shipment pada tanggal tersebut TIDAK memiliki nama_freelance
-      const hasNoFreelance = dateShipments.every(s => 
-        !s.nama_freelance || 
-        s.nama_freelance.trim() === '' || 
-        s.nama_freelance === '-'
-      )
-      
-      // Hari kerja (bukan Minggu) dengan shipment TANPA freelance
-      return !isSunday(new Date(date)) && hasShipments && hasNoFreelance
-    }).length
+    // 2. Query untuk metrics (tetap sama dengan sebelumnya)
+    let metricsQuery = `
+      SELECT 
+        -- ... (sama dengan sebelumnya)
+        COUNT(DISTINCT tanggal) as total_hari,
+        COUNT(DISTINCT CASE 
+          WHEN NOT isSunday(tanggal::date) THEN tanggal 
+          ELSE NULL 
+        END) as total_hari_kerja,
+        
+        COUNT(DISTINCT CASE 
+          WHEN NOT isSunday(tanggal::date) 
+            AND (nama_freelance IS NULL OR nama_freelance = '' OR nama_freelance = '-')
+            THEN tanggal 
+          ELSE NULL 
+        END) as hke,
+        
+        COUNT(DISTINCT CASE 
+          WHEN NOT isSunday(tanggal::date) 
+            AND nama_freelance IS NOT NULL 
+            AND nama_freelance != '' 
+            AND nama_freelance != '-'
+            THEN tanggal 
+          ELSE NULL 
+        END) as hkne,
+        
+        COALESCE(SUM(jumlah_toko), 0) as total_dp,
+        COALESCE(SUM(terkirim), 0) as total_terkirim,
+        COALESCE(SUM(gagal), 0) as total_gagal
+      FROM shipment
+      WHERE 1=1
+    `
 
-    // 3. HKNE: Hari kerja yang memiliki shipment DENGAN nama_freelance
-    const hkne = uniqueDates.filter(date => {
-      const dateShipments = shipments.filter(s => s.tanggal === date)
-      
-      // Cek apakah ada shipment pada tanggal tersebut
-      const hasShipments = dateShipments.length > 0
-      
-      // Cek apakah SETIDAKNYA SATU shipment pada tanggal tersebut memiliki nama_freelance
-      const hasFreelance = dateShipments.some(s => 
-        s.nama_freelance && 
-        s.nama_freelance.trim() !== '' && 
-        s.nama_freelance !== '-'
-      )
-      
-      // Hari kerja (bukan Minggu) dengan shipment YANG MEMILIKI freelance
-      return !isSunday(new Date(date)) && hasShipments && hasFreelance
-    }).length
+    const metricsParams = [...queryParams.slice(0, -paramIndex + 1)]
+    let metricsParamIndex = metricsParams.length + 1
 
-    // 🆕 4. TOTAL DP: Sum dari jumlah_toko
-    const totalDp = shipments.reduce((sum, s) => sum + (Number(s.jumlah_toko) || 0), 0)
-    
-    // 🆕 5. TOTAL TERKIRIM: Sum dari terkirim
-    const totalTerkirim = shipments.reduce((sum, s) => sum + (Number(s.terkirim) || 0), 0)
-    
-    // 🆕 6. TOTAL GAGAL: Sum dari gagal
-    const totalGagal = shipments.reduce((sum, s) => sum + (Number(s.gagal) || 0), 0)
+    // Apply same filters to metrics query
+    if (userRole === 'regular') {
+      metricsQuery += ` AND user_id = $${metricsParamIndex}`
+      metricsParams.push(userId)
+      metricsParamIndex++
+    }
 
-    // Data untuk chart
+    if (fromDate) {
+      metricsQuery += ` AND tanggal >= $${metricsParamIndex}`
+      metricsParams.push(fromDate)
+      metricsParamIndex++
+    }
+
+    if (toDate) {
+      metricsQuery += ` AND tanggal <= $${metricsParamIndex}`
+      metricsParams.push(toDate)
+      metricsParamIndex++
+    }
+
+    if (search) {
+      metricsQuery += ` AND (
+        nama_lengkap ILIKE $${metricsParamIndex} OR
+        shipment_id ILIKE $${metricsParamIndex} OR
+        tanggal::text ILIKE $${metricsParamIndex} OR
+        COALESCE(nama_freelance, '') ILIKE $${metricsParamIndex}
+      )`
+      metricsParams.push(`%${search}%`)
+      metricsParamIndex++
+    }
+
+    const metricsResult = await client.query(metricsQuery, metricsParams)
+    const metrics = metricsResult.rows[0] || {
+      total_hari_kerja: 0,
+      hke: 0,
+      hkne: 0,
+      total_dp: 0,
+      total_terkirim: 0,
+      total_gagal: 0
+    }
+
+    // Data untuk chart (filtered)
     const chartData = shipments.reduce((acc: any[], shipment) => {
       const existing = acc.find(item => item.date === shipment.tanggal)
       if (existing) {
@@ -138,16 +205,21 @@ export async function GET(request: NextRequest) {
       success: true,
       shipments,
       cardboard: { 
-        hk, 
-        hke, 
-        hkne,
-        // 🆕 Tambahkan 3 metrics baru
-        totalDp,
-        totalTerkirim,
-        totalGagal
+        hk: Number(metrics.total_hari_kerja) || 0,
+        hke: Number(metrics.hke) || 0,
+        hkne: Number(metrics.hkne) || 0,
+        totalDp: Number(metrics.total_dp) || 0,
+        totalTerkirim: Number(metrics.total_terkirim) || 0,
+        totalGagal: Number(metrics.total_gagal) || 0
       },
       chartData,
       total: shipments.length,
+      // 🆕 Kembalikan filter yang aktif
+      activeFilters: {
+        filterByMetric,
+        filterByDate,
+        filterByType
+      }
     })
 
   } catch (error) {

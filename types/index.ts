@@ -40,7 +40,7 @@ export interface CardboardData {
   hk: number;
   hke: number;
   hkne: number;
-  // 🆕 Tambahkan 3 field baru
+  // 🆕 Tambahkan 3 field baru dengan TIPE NUMBER
   totalDp: number;
   totalTerkirim: number;
   totalGagal: number;
@@ -56,4 +56,14 @@ export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+}
+
+// 🆕 Type untuk response API dashboard
+export interface DashboardResponse {
+  success: boolean;
+  shipments: Shipment[];
+  cardboard: CardboardData;
+  chartData: ChartData[];
+  total: number;
+  message?: string;
 }
