@@ -6,7 +6,7 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle,
-  DialogDescription // TAMBAH INI
+  DialogDescription
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,8 +20,7 @@ import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 
 interface Driver {
-  id: string
-  user_id: string
+  user_id: string      // PERBAIKAN: HANYA user_id, BUKAN id
   nama_lengkap: string
   role: string
 }
@@ -57,26 +56,29 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
     }
   }, [isOpen])
 
+  // ✅ PERBAIKAN 1: Fungsi fetchDrivers yang sudah benar
   const fetchDrivers = async () => {
     try {
       setIsFetchingDrivers(true)
-      console.log('Fetching drivers...')
+      console.log('🚀 Fetching drivers from /api/users/drivers...')
       
       const response = await fetch('/api/users/drivers')
-      console.log('Response status:', response.status)
+      
+      console.log('📡 Response status:', response.status)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
       const data = await response.json()
-      console.log('API response data:', data)
+      console.log('📦 API response:', data)
       
       if (data.success) {
-        // PERHATIAN: Gunakan data.users bukan data.drivers
-        // Sesuai dengan struktur dari API route
-        const driversData = data.users || data.drivers || []
-        console.log('Drivers data:', driversData)
+        // ✅ PERBAIKAN PENTING: Gunakan data.drivers (BUKAN data.users)
+        const driversData = data.drivers || []
+        console.log('👥 Drivers data:', driversData)
+        console.log('🔢 Number of drivers:', driversData.length)
+        
         setDrivers(driversData)
         
         if (driversData.length === 0) {
@@ -94,7 +96,7 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
         })
       }
     } catch (error) {
-      console.error('Error fetching drivers:', error)
+      console.error('❌ Error fetching drivers:', error)
       toast({
         title: 'Connection Error',
         description: 'Tidak dapat mengambil data driver',
@@ -121,22 +123,20 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
     })
   }
 
+  // ✅ PERBAIKAN 2: Fungsi handleDriverSelect yang benar
   const handleDriverSelect = (userId: string) => {
-    console.log('Selected driver ID:', userId)
-    console.log('Available drivers:', drivers)
+    console.log('🎯 Selected driver ID:', userId)
+    console.log('📋 Available drivers:', drivers)
     
-    // Gunakan 'id' atau 'user_id' sesuai struktur data dari API
-    const selectedDriver = drivers.find(d => 
-      d.id?.toString() === userId || 
-      d.user_id?.toString() === userId
-    )
+    // PERBAIKAN: Hanya gunakan user_id (sesuai struktur API)
+    const selectedDriver = drivers.find(d => d.user_id?.toString() === userId)
     
-    console.log('Selected driver:', selectedDriver)
+    console.log('👤 Selected driver:', selectedDriver)
     
     if (selectedDriver) {
       setFormData(prev => ({
         ...prev,
-        user_id: selectedDriver.id || selectedDriver.user_id,
+        user_id: selectedDriver.user_id,
         nama_lengkap: selectedDriver.nama_lengkap,
       }))
     }
@@ -227,7 +227,7 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
         nama_freelance: formData.nama_freelance.trim(),
       }
 
-      console.log('Submitting payload:', payload)
+      console.log('📤 Submitting payload:', payload)
 
       const response = await fetch('/api/shipments/freelance', {
         method: 'POST',
@@ -316,15 +316,12 @@ export default function FreelanceModal({ isOpen, onClose, userRole }: FreelanceM
                     Tidak ada driver tersedia
                   </SelectItem>
                 ) : (
-                  drivers.map(driver => {
-                    // Gunakan id atau user_id sesuai struktur data
-                    const driverId = driver.id || driver.user_id
-                    return (
-                      <SelectItem key={driverId} value={driverId.toString()}>
-                        {driver.nama_lengkap}
-                      </SelectItem>
-                    )
-                  })
+                  drivers.map(driver => (
+                    // ✅ PERBAIKAN: Gunakan user_id sebagai value
+                    <SelectItem key={driver.user_id} value={driver.user_id.toString()}>
+                      {driver.nama_lengkap}
+                    </SelectItem>
+                  ))
                 )}
               </SelectContent>
             </Select>
