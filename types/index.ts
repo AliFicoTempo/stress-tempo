@@ -47,9 +47,16 @@ export interface CardboardData {
 }
 
 export interface ChartData {
-  date: string;
-  terkirim: number;
-  gagal: number;
+  date: string
+  terkirim: number
+  gagal: number
+  shipments_count?: number
+  day_of_week?: number
+  is_sunday?: boolean
+  // 🆕 Tambahkan properti baru untuk filter chart
+  isFiltered?: boolean
+  filteredByType?: 'terkirim' | 'gagal' | null
+  total?: number
 }
 
 export interface AuthState {
